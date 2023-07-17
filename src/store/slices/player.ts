@@ -6,7 +6,7 @@ interface PlayPayloadProps {
   currentModuleIndex: number
 }
 
-const playerSlice = createSlice({
+export const playerSlice = createSlice({
   name: 'player',
   initialState: {
     course: {
