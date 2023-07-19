@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { player as reducer, play, next } from './player'
+import { player as reducer, play, next, PlayerState } from './player'
 
-const exampleState = {
+const exampleState: PlayerState = {
   course: {
+    id: 1,
     modules: [
       {
-        id: '1',
+        id: 1,
         title: 'Começando a aprender',
         lessons: [
           { id: 'VeL1LuVhrkU', title: 'Colocando background com pseudo-elemento (::before)', duration: '06:54' },
@@ -13,7 +14,7 @@ const exampleState = {
         ],
       },
       {
-        id: '2',
+        id: 2,
         title: 'Últimos lançamentos',
         lessons: [
           { id: 'syoyb3SVTII', title: 'Nova Feature/Funcionalidade do Github -Command Palette', duration: '04:27' },
@@ -24,6 +25,7 @@ const exampleState = {
   },
   currentLessonIndex: 0,
   currentModuleIndex: 0,
+  isLoading: false,
 }
 
 describe('player slice', () => {

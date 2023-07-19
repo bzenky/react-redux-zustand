@@ -1,42 +1,49 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit"
+import { PayloadAction, createSlice, createAsyncThunk } from "@reduxjs/toolkit"
 import { useAppSelector } from ".."
+import { api } from "../../lib/axios"
 
 interface PlayPayloadProps {
   currentLessonIndex: number
   currentModuleIndex: number
 }
 
+interface Course {
+  id: number
+  modules: Array<{
+    id: number
+    title: string
+    lessons: Array<{
+      id: string
+      title: string
+      duration: string
+    }>
+  }>
+}
+
+export interface PlayerState {
+  course: Course | null
+  currentModuleIndex: number
+  currentLessonIndex: number
+  isLoading: boolean
+}
+
+const initialState: PlayerState = {
+  course: null,
+  currentLessonIndex: 0,
+  currentModuleIndex: 0,
+  isLoading: true
+}
+
+export const fetchCourse = createAsyncThunk('player/load', async () => {
+  const response = await api.get('/courses/1')
+    .then(response => response.data)
+
+  return response
+})
+
 export const playerSlice = createSlice({
   name: 'player',
-  initialState: {
-    course: {
-      modules: [
-        {
-          id: '1',
-          title: 'Começando a aprender',
-          lessons: [
-            { id: 'VeL1LuVhrkU', title: 'Colocando background com pseudo-elemento (::before)', duration: '06:54' },
-            { id: 'jnx2CFb1Ui4', title: 'Colocando overlay utilizando ::before e Shorthand para Top/Bottom/Left/Right (inset)', duration: '04:26' },
-            { id: 'cPBK6j_eTgA', title: 'Utilizando Visão de Tarefas (workspaces/desktops) no Windows 10', duration: '04:45' },
-            { id: 'ohUt3Z9LIeU', title: 'Texto com Background (gradiente, imagem, gif)', duration: '06:33' },
-            { id: 'dNQDxJR80Zk', title: 'Utilizando Alpha no RGB/HSL', duration: '02:57' },
-          ],
-        },
-        {
-          id: '2',
-          title: 'Últimos lançamentos',
-          lessons: [
-            { id: 'syoyb3SVTII', title: 'Nova Feature/Funcionalidade do Github -Command Palette', duration: '04:27' },
-            { id: 'YoY290mpxeo', title: 'Centralizando elemento absoluto com Calc e Translate', duration: '07:25' },
-            { id: 'f2kbQKau-Bw', title: 'Github Student Developer Pack - Benefícios para estudantes!', duration: '04:32' },
-            { id: 'FFF09X6rKRw', title: 'Linkedin Premium - Benefício para estudantes!', duration: '00:36' },
-          ],
-        },
-      ],
-    },
-    currentLessonIndex: 0,
-    currentModuleIndex: 0,
-  },
+  initialState,
   reducers: {
     play: (state, action: PayloadAction<PlayPayloadProps>) => {
       state.currentLessonIndex = action.payload.currentLessonIndex
@@ -44,13 +51,13 @@ export const playerSlice = createSlice({
     },
     next: (state) => {
       const nextLessonIndex = state.currentLessonIndex + 1
-      const nextLesson = state.course.modules[state.currentModuleIndex].lessons[nextLessonIndex]
+      const nextLesson = state.course?.modules[state.currentModuleIndex].lessons[nextLessonIndex]
 
       if (nextLesson) {
         state.currentLessonIndex = nextLessonIndex
       } else {
         const nextModuleIndex = state.currentModuleIndex + 1
-        const nextModule = state.course.modules[nextModuleIndex]
+        const nextModule = state.course?.modules[nextModuleIndex]
 
         if (nextModule) {
           state.currentModuleIndex = nextModuleIndex
@@ -58,6 +65,16 @@ export const playerSlice = createSlice({
         }
       }
     }
+  },
+  extraReducers(builder) {
+    builder.addCase(fetchCourse.pending, (state) => {
+      state.isLoading = true
+    })
+
+    builder.addCase(fetchCourse.fulfilled, (state, action) => {
+      state.course = action.payload
+      state.isLoading = false
+    })
   }
 })
 
@@ -69,8 +86,8 @@ export const useCurrentLesson = () => {
   return useAppSelector(state => {
     const { currentModuleIndex, currentLessonIndex } = state.player
 
-    const currentLesson = state.player.course.modules[currentModuleIndex].lessons[currentLessonIndex]
-    const currentModule = state.player.course.modules[currentModuleIndex]
+    const currentLesson = state.player.course?.modules[currentModuleIndex].lessons[currentLessonIndex]
+    const currentModule = state.player.course?.modules[currentModuleIndex]
 
     return { currentLesson, currentModule }
   })
